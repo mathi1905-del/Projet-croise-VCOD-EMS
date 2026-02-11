@@ -2,7 +2,7 @@
 
 library(seqinr)
 
-# Fonction qui permet de lire les fichiers et de séparer chaque élément des séquences
+########### Fonction qui permet de lire les fichiers et de séparer chaque élément des séquences ###########
 lecture_split_seq <- function(nom_fichier){
   adn <- read.alignment(file = nom_fichier, format = "fasta")
   
@@ -23,36 +23,32 @@ adn_ug_split <- lecture_split_seq("hiv_db_UG_0.fasta")
 adn_us_split <- lecture_split_seq("hiv_db_US_0.fasta")
 
 
-# Fonction qui calcul le nombre de nucléotides, de tirets
-nb_elm_seq <- function (adn_split){
-  
-  nb_elm_seq <- matrix (data = "NA", nrow = length(adn_split$seq), ncol = 4)
-  colnames (nb_elm_seq) <- c("ID", "Nucléotide", "Tiret", "Total")
-  
-  for (i in 1:(length(adn_split$seq))){
-    nb_nucleo = 0
-    nb_tiret = 0
-    
-    for (j in 1:length(adn_split$seq[[i]])){
-      if (adn_split$seq[[i]][j] != "-"){
-        nb_nucleo = nb_nucleo + 1
-      }
-      else {
-        nb_tiret <- nb_tiret + 1
-      }
-      nb_elm_seq[i,1] <- adn_split$nam[i]
-      nb_elm_seq[i,2] <- nb_nucleo
-      nb_elm_seq[i,3] <- nb_tiret
-      nb_elm_seq[i,4] <- nb_nucleo + nb_tiret
-    }
+########### Fonction qui calcul le nombre de nucléotides, de tirets ###########
+compatage_nucleotide <- function(adn){
+  nb_nucleotides <- matrix(NA, nrow = length(adn$seq), ncol = 4)
+  colnames(nb_nucleotides) <- c("nom_sequence", "nb_nucleotides", "nb_tirets", "Total")
+  for (i in 1:length(adn$seq)){
+    sequence <- adn$seq[[i]]
+    nb_nucleotides[i, 1] <- adn$nam[i]
+    nb_tiret <- sum(sequence=='-')
+    nb_nucleotides[i, 3] <- nb_tiret
+    nb_nucleotides[i, 2] <- length(adn$seq[[i]]) - nb_tiret
+    nb_nucleotides[i, 4] <- length(adn$seq[[i]])
   }
-  return (nb_elm_seq)
+  return(as.data.frame(nb_nucleotides))
 }
 
-elm <- nb_elm_seq(adn_fr_split)
+# Evolution des nucléotides en fonction du temps
+adn_all_split <- lecture_split_seq("ALL_sequences.fasta")
+
+# Tableau avec le nombre de nucléotide
+comptage <- compatage_nucleotide(adn_all_split)
+
+# Ecriture du résultat dans un fichier csv
+write.table(x = comptage, file = "nb_nucléotide.csv", sep =";", col.names = NA)
 
 
-# Fonction pour détecter des séquences
+########### Fonction pour détecter des séquences ###########
 detection_seq <- function(adn, sequence_init){
   adn <- strsplit(x = adn, split = "")
   
