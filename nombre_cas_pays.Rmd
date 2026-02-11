@@ -9,7 +9,6 @@ runtime: shiny
 library(ggplot2)
 
 bio_medi <- read.csv("ALL_biomedical.csv")
-
 split_data <- strsplit(as.character(bio_medi$nam), "\\.")
 
 mois  <- as.numeric(sapply(split_data, function(x) x[3]))
@@ -37,6 +36,21 @@ table_evolution$trimestre <- as.numeric(as.character(table_evolution$trimestre))
 
 table_evolution$temps_continu <- 
   table_evolution$annee + (table_evolution$trimestre - 1)/4
+```
+
+```{r}
+library(DT)
+# Nombre total de cas par pays
+table_total_pays <- aggregate(nb_cas ~ pays,
+                               data = table_evolution,
+                               sum)
+
+table_total_pays <- table_total_pays[order(-table_total_pays$nb_cas), ]
+
+datatable(table_total_pays,
+          options = list(pageLength = 10),
+          caption = "Nombre total de cas par pays")
+
 ```
 
 
@@ -68,4 +82,63 @@ renderPlot({
 
 ```
 
+
+```{r}
+library(DT)
+library(dplyr)
+library(stringr)
+
+bio_medi <- read.csv("ALL_biomedical.csv")
+social   <- read.csv("ALL_social.csv")
+
+data_complete <- merge(bio_medi,
+                       social,
+                       by.x = "nam",
+                       by.y = "ID",
+                       all.x = TRUE)
+
+split_data <- strsplit(as.character(data_complete$nam), "\\.")
+
+data_complete$mois  <- as.numeric(sapply(split_data, function(x) x[3]))
+data_complete$annee <- as.numeric(sapply(split_data, function(x) x[4]))
+data_complete$pays  <- sapply(split_data, function(x) x[5])
+
+data_complete$trimestre <- ceiling(data_complete$mois / 3)
+
+# Nombre de nouveaux cas trimestriels 
+cas_trimestriels <- data_complete %>%
+  group_by(pays, annee, trimestre) %>%
+  summarise(nb_nouveaux_cas = n(), .groups = "drop")
+
+datatable(cas_trimestriels,
+          options = list(pageLength = 10),
+          caption = "Nombre de nouveaux cas trimestriels par pays")
+
+# Statistiques fumeurs
+stats_fumeur <- data_complete %>%
+  group_by(pays) %>%
+  summarise(
+    total = n(),
+    nb_fumeurs = sum(grepl("fumeur", smoke, ignore.case = TRUE), na.rm = TRUE),
+    proportion_fumeurs = round(nb_fumeurs / total * 100, 2)
+  )
+
+datatable(stats_fumeur,
+          options = list(pageLength = 10),
+          caption = "Statistiques sur les fumeurs par pays")
+
+# Statistiques alcool 
+stats_alcool <- data_complete %>%
+  group_by(pays) %>%
+  summarise(
+    total = n(),
+    nb_alcool_regulier = sum(grepl("quotidien|réguli", alcohol, ignore.case = TRUE), na.rm = TRUE),
+    proportion_alcool_regulier = round(nb_alcool_regulier / total * 100, 2)
+  )
+
+datatable(stats_alcool,
+          options = list(pageLength = 10),
+          caption = "Statistiques sur la consommation d’alcool par pays")
+
+```
 
