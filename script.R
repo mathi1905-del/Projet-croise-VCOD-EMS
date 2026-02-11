@@ -52,8 +52,44 @@ nb_elm_seq <- function (adn_split){
 elm <- nb_elm_seq(adn_fr_split)
 
 
+# Fonction pour détecter des séquences
+detection_seq <- function(adn, sequence_init){
+  adn <- strsplit(x = adn, split = "")
+  
+  sequence <- strsplit(x = sequence_init, split = "")
+  
+  sequence_res = ""
 
+  indice_premier_elm <- 1
+  cpt <- 0
+  elm = adn[[1]][1]
+  elm_seq <- sequence[[1]][1]
+    for (i in 1:length(adn)){
+      print (sequence_res)
+      print(sequence)
+      if (elm == elm_seq){
+        elm = adn[[1]][i+1]
+        print(elm)
+        elm_seq = sequence[[1]][i+1]
+        print(elm_seq)
+        sequence_res = paste (sequence_res, elm, sep="")
+        print(sequence_res)
+        cpt = cpt + 1
+        print(cpt)
+      }
+      else {
+        elm = adn[[1]][i+1]
+        print(elm)
+        sequence_res = ""
+        indice_premier_elm <- i + 1
+        cpt = cpt + 1
+      }
+    }
 
+  return (list(sequence_res, indice_premier_elm))
+}
+ 
+detection_seq("agctctgattcgagggcccatgcgatc", "gggccc")
 
 
 
